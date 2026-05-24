@@ -197,5 +197,3 @@ net localgroup administrators
 ```
 
 ---
-
-*OSCP PEN-200 | DLL Hijacking | Authorized lab use only*
