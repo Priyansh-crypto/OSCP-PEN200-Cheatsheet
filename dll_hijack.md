@@ -61,6 +61,8 @@ Get-ItemProperty "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\*" |
 ```powershell
 echo "test" > 'C:\AppDir\test.txt'
 type 'C:\AppDir\test.txt'
+
+icacls "C:\path\to\binary folder"
 ```
 
 ✅ File created = you can write here = valid hijack location.
