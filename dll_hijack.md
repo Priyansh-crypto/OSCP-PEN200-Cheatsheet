@@ -1,6 +1,5 @@
 # 🪟 OSCP PEN-200 — DLL Hijacking
 
-> **Section:** Service Hijacking | **User:** `steve` | **Target:** CLIENTWK220  
 > **Goal:** Plant a malicious DLL in a writable app directory → privileged user triggers it → escalate
 
 ---
