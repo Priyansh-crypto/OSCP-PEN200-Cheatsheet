@@ -248,5 +248,3 @@ python3 -m http.server 80
 ```
 
 ---
-
-*OSCP PEN-200 | Section 17.2.1 | Service Binary Hijacking | Authorized lab use only*
