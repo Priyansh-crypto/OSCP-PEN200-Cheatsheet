@@ -7,5 +7,5 @@
 7. Check /priv
 8. run winpeas
 9. run mimikatz to dump creds 
-10.Try to crack ntml hashes
+10.Try to crack ntml hashes - all hashed found
  
